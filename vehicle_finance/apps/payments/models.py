@@ -108,3 +108,36 @@ class Payment(models.Model):
     amount=models.DecimalField(max_digits=10, decimal_places=2)
     mpesa_receipt=models.CharField(max_length=50, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class MpesaSTKRequest(models.Model):
+    class RequestStatus(models.TextChoices):
+        PENDING = 'PENDING', 'Pending'
+        SUCCESS = 'SUCCESS', 'Successful'
+        FAILED = 'FAILED', 'Failed'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    invoice = models.ForeignKey(
+        Invoice,
+        on_delete=models.CASCADE,
+        related_name='stk_requests',
+    )
+    phone_number = models.CharField(max_length=20)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    merchant_request_id = models.CharField(max_length=100, blank=True)
+    checkout_request_id = models.CharField(max_length=100, unique=True)
+    status = models.CharField(
+        max_length=10,
+        choices=RequestStatus.choices,
+        default=RequestStatus.PENDING,
+    )
+    result_code = models.CharField(max_length=20, blank=True)
+    result_description = models.TextField(blank=True)
+    mpesa_receipt = models.CharField(max_length=50, blank=True)
+    callback_payload = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"STK {self.checkout_request_id} - {self.status}"

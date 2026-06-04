@@ -37,6 +37,13 @@ DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 
+MPESA_CONSUMER_KEY = env('MPESA_CONSUMER_KEY', default='')
+MPESA_CONSUMER_SECRET = env('MPESA_CONSUMER_SECRET', default='')
+MPESA_PASSKEY = env('MPESA_PASSKEY', default='')
+MPESA_SHORTCODE = env('MPESA_SHORTCODE', default='')
+MPESA_CALLBACK_URL = env('MPESA_CALLBACK_URL', default='')
+MPESA_DEMO_AUTO_COMPLETE = env.bool('MPESA_DEMO_AUTO_COMPLETE', default=False)
+
 
 # Application definition
 

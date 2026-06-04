@@ -1,8 +1,26 @@
-# React + Vite
+# Vehicle Finance Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React dashboard for the Vehicle Finance backend API.
 
-Currently, two official plugins are available:
+## Setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```bash
+npm install
+cp .env.example .env
+npm run dev
+```
+
+Set the API base URL in `.env`:
+
+```env
+VITE_API_BASE_URL=http://127.0.0.1:8000
+```
+
+## Scripts
+
+```bash
+npm run dev      # Start the local Vite dev server
+npm run build    # Build the production bundle
+npm run preview  # Preview the production build locally
+npm run lint     # Run ESLint
+```

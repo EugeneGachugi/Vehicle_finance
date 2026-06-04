@@ -68,6 +68,8 @@ const statusClassNames = {
   PAID: "border-emerald-200 bg-emerald-50 text-emerald-700",
   PARTIAL: "border-sky-200 bg-sky-50 text-sky-700",
   OVERPAID: "border-violet-200 bg-violet-50 text-violet-700",
+  SUCCESS: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  FAILED: "border-rose-200 bg-rose-50 text-rose-700",
 };
 
 const formatCurrency = (amount) => Number(amount || 0).toLocaleString("en-KE", {
@@ -530,7 +532,7 @@ function VehiclesModule({ vehiclesHook, driversHook }) {
 }
 
 function PaymentsModule({ paymentsHook, driversHook, vehiclesHook }) {
-  const { contracts, invoices, payments, paymentStats, createContract, createInvoice, createPayment, isLoading } = paymentsHook;
+  const { contracts, invoices, payments, mpesaRequests, paymentStats, createContract, createInvoice, createPayment, isLoading } = paymentsHook;
   const { drivers } = driversHook;
   const { vehicles } = vehiclesHook;
   const [tab, setTab] = useState("invoices");
@@ -706,7 +708,7 @@ function PaymentsModule({ paymentsHook, driversHook, vehiclesHook }) {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Outstanding" value={formatCurrency(paymentStats.outstandingBalance)} meta="Across invoices" icon={FileText} tone="amber" />
         <StatCard label="Collected" value={formatCurrency(paymentStats.totalCollected)} meta="Recorded payments" icon={CircleDollarSign} />
-        <StatCard label="Unpaid" value={paymentStats.unpaidInvoices.length} meta="Open invoices" icon={AlertCircle} tone="rose" />
+        <StatCard label="Open Invoices" value={paymentStats.unpaidInvoices.length + paymentStats.partialInvoices.length} meta="Unpaid and partial" icon={AlertCircle} tone="rose" />
         <StatCard label="Active Contracts" value={paymentStats.activeContracts.length} meta="Running agreements" icon={CreditCard} tone="sky" />
       </div>
 
@@ -716,6 +718,7 @@ function PaymentsModule({ paymentsHook, driversHook, vehiclesHook }) {
             ["invoices", "Invoices"],
             ["contracts", "Contracts"],
             ["payments", "Payment History"],
+            ["mpesa", "M-Pesa Requests"],
           ].map(([value, label]) => (
             <Button key={value} variant={tab === value ? "default" : "outline"} onClick={() => setTab(value)}>{label}</Button>
           ))}
@@ -819,6 +822,37 @@ function PaymentsModule({ paymentsHook, driversHook, vehiclesHook }) {
                     <TableCell>{payment.invoice?.slice(0, 8)}</TableCell>
                     <TableCell>{formatCurrency(payment.amount)}</TableCell>
                     <TableCell>{payment.created_at ? new Date(payment.created_at).toLocaleDateString("en-KE") : "N/A"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {tab === "mpesa" && (
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Invoice</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Receipt / Result</TableHead>
+                  <TableHead>Created</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {mpesaRequests.length === 0 ? <EmptyRow colSpan={6}>No M-Pesa requests recorded yet.</EmptyRow> : mpesaRequests.map((request) => (
+                  <TableRow key={request.id}>
+                    <TableCell className="font-medium">{request.invoice?.slice(0, 8)}</TableCell>
+                    <TableCell>{request.phone_number}</TableCell>
+                    <TableCell>{formatCurrency(request.amount)}</TableCell>
+                    <TableCell><StatusBadge value={request.status} label={request.status_display} /></TableCell>
+                    <TableCell className="max-w-xs truncate">{request.mpesa_receipt || request.result_description || "Waiting for callback"}</TableCell>
+                    <TableCell>{request.created_at ? new Date(request.created_at).toLocaleString("en-KE") : "N/A"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

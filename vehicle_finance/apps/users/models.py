@@ -27,8 +27,7 @@ class User(AbstractUser):
         return f"{self.username} ({self.get_role_display()})"
 
 class DriverProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='driver_profile', primary_key=True)
-    
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='driver_profile')
     
     kra_pin=models.CharField(
         max_length=20,
@@ -44,7 +43,6 @@ class DriverProfile(models.Model):
         VERIFIED = 'VERIFIED' , 'Verified'
         REJECTED = 'REJECTED' , 'Rejected'
 
-    user=models.OneToOneField(User, on_delete=models.CASCADE, related_name='driver_profile')
     verification_status = models.CharField(
         max_length=10,
         choices=Status.choices,
@@ -56,5 +54,4 @@ class DriverProfile(models.Model):
     def __str__(self):
         return f"Driver Profile for {self.user.username}"
     pass
-
 

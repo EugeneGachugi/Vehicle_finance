@@ -12,6 +12,20 @@ const normalizePayment = (payment) => ({
   created_at: payment.created_at,
 });
 
+const normalizeMpesaRequest = (request) => ({
+  id: request.id,
+  invoice: request.invoice,
+  phone_number: request.phone_number,
+  amount: toNumber(request.amount),
+  checkout_request_id: request.checkout_request_id,
+  status: request.status,
+  status_display: request.status_display,
+  result_description: request.result_description,
+  mpesa_receipt: request.mpesa_receipt,
+  created_at: request.created_at,
+  completed_at: request.completed_at,
+});
+
 const normalizeInvoice = (invoice) => ({
   id: invoice.id,
   contract: invoice.contract,
@@ -51,6 +65,7 @@ export function useAdminPayments() {
   const [contracts, setContracts] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [mpesaRequests, setMpesaRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -59,15 +74,17 @@ export function useAdminPayments() {
     setError(null);
 
     try {
-      const [contractsResponse, invoicesResponse, paymentsResponse] = await Promise.all([
+      const [contractsResponse, invoicesResponse, paymentsResponse, mpesaRequestsResponse] = await Promise.all([
         api.get("/api/payments/contracts/"),
         api.get("/api/payments/invoices/"),
         api.get("/api/payments/payments/"),
+        api.get("/api/payments/mpesa/requests/"),
       ]);
 
       setContracts(contractsResponse.data.map(normalizeContract));
       setInvoices(invoicesResponse.data.map(normalizeInvoice));
       setPayments(paymentsResponse.data.map(normalizePayment));
+      setMpesaRequests(mpesaRequestsResponse.data.map(normalizeMpesaRequest));
     } catch (err) {
       setError(parseBackendError(err));
     } finally {
@@ -166,6 +183,7 @@ export function useAdminPayments() {
     contracts,
     invoices,
     payments,
+    mpesaRequests,
     paymentStats,
     isLoading,
     error,
