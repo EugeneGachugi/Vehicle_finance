@@ -3,6 +3,7 @@ import api from "@/api/axios";
 import { parseBackendError } from "@/utils/errorParser";
 
 export function useAdminDrivers(){
+    const [allDrivers, setAllDrivers] = useState([]);
     const[drivers, setDrivers] = useState([]);
     const [accessRequests, setAccessRequests]= useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -15,6 +16,7 @@ export function useAdminDrivers(){
             const response = await api.get("/api/users/drivers/");
             const allDrivers = response.data;
 
+            setAllDrivers(allDrivers);
             setDrivers(allDrivers.filter(d => d.driver_profile?.verification_status === "VERIFIED"));
             setAccessRequests(allDrivers.filter(d=> d.driver_profile?.verification_status === "PENDING"));
         }catch(err){
@@ -28,13 +30,11 @@ export function useAdminDrivers(){
         setIsLoading(true);
         setError(null);
         try{
-            const [firstName = "", ...lastNameParts] = (driverFormData.full_name || "").trim().split(/\s+/);
-
             await api.post("/api/users/onboard/",{
-                username: driverFormData.username || driverFormData.email,
+                username: driverFormData.username,
                 email: driverFormData.email,
-                first_name: firstName,
-                last_name: lastNameParts.join(" "),
+                first_name: driverFormData.first_name,
+                last_name: driverFormData.last_name,
                 password: driverFormData.password,
                 national_id: driverFormData.national_id,
                 profile_details: {
@@ -86,6 +86,6 @@ export function useAdminDrivers(){
     }, [fetchDriversData]);
 
     const clearError = useCallback(() => setError(null),[]);
-    return {drivers, accessRequests, isLoading, error, clearError, createDriver, approveDriver, rejectDriver, refreshDrivers: fetchDriversData};
+    return {allDrivers, drivers, accessRequests, isLoading, error, clearError, createDriver, approveDriver, rejectDriver, refreshDrivers: fetchDriversData};
 
 }

@@ -52,6 +52,7 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    color-scheme: light;
   }
 
   * {
@@ -59,5 +60,10 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  select,
+  option {
+    color-scheme: light;
   }
 }

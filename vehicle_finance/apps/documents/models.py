@@ -19,26 +19,33 @@ class DocumentType(models.TextChoices):
     PSV_BADGE = 'PB', 'PSV Badge'
     INSPECTION_REPORT = 'IP', 'Inspection Report'
 
+
+EXPIRING_DOCUMENT_TYPES = {
+    DocumentType.DRIVING_LICENSE,
+    DocumentType.LOGBOOK,
+    DocumentType.INSURANCE,
+    DocumentType.PSV_BADGE,
+    DocumentType.INSPECTION_REPORT,
+}
+
+
 class Document(models.Model):
     doc_type = models.CharField(max_length=2, choices=DocumentType.choices)
-    status = models.CharField(max_length=2, choices=DocumentStatus.choices)
+    status = models.CharField(
+        max_length=2,
+        choices=DocumentStatus.choices,
+        default=DocumentStatus.PENDING,
+    )
     file = models.FileField(upload_to='uploads/%Y/%m/%d/')
     expiry_date=models.DateField(null=True, blank=True)
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
+    # DriverProfile currently uses an integer PK while Vehicle uses a UUID PK.
+    object_id = models.CharField(max_length=36)
     content_object = GenericForeignKey('content_type', 'object_id')
 
     def clean(self):
-        expiring_types = [
-            DocumentType.DRIVING_LICENSE, 
-            DocumentType.INSURANCE, 
-            DocumentType.PSV_BADGE, 
-            DocumentType.INSPECTION_REPORT,
-            DocumentType.LOGBOOK
-        ]
-
-        if self.doc_type in expiring_types and not self.expiry_date:
+        if self.doc_type in EXPIRING_DOCUMENT_TYPES and not self.expiry_date:
             raise ValidationError({
                 'expiry_date': f"An expiry date is required for {self.get_doc_type_display()}."
             })

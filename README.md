@@ -77,6 +77,31 @@ cd front_end/front_end
 npm run build
 ```
 
+## Documents MVP
+
+Admins can upload driver and vehicle documents from the Documents panel in the
+admin console, then verify or reject each pending document. Driver documents are
+attached to `DriverProfile`; vehicle documents are attached to `Vehicle`.
+
+Run the expiry check manually with:
+
+```bash
+cd vehicle_finance
+python manage.py check_document_expiry
+```
+
+The command marks verified or pending documents past their expiry date as
+expired. It also sends warnings for verified documents expiring within seven
+days. Local development uses Django's console email backend by default, so
+warning emails appear in the Django terminal.
+
+To test the workflow:
+
+1. Sign in as a staff/admin user and open **Documents**.
+2. Choose Driver or Vehicle, select the target and document type, then upload a file.
+3. Open the uploaded file from the documents table and select Verify or Reject.
+4. Run `python manage.py check_document_expiry` to test expiry processing.
+
 ## Notes
 
 - Do not commit real `.env` files. Use `.env.example` for safe placeholder values.

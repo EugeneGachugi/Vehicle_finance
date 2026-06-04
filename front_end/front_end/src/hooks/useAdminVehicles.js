@@ -77,6 +77,38 @@ export function useAdminVehicles() {
     }
   }, [fetchVehiclesData]);
 
+  const createVehicleMake = useCallback(async (make) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await api.post("/api/vehicles/makes/", { make });
+      await fetchVehiclesData();
+      return true;
+    } catch (err) {
+      setError(parseBackendError(err));
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchVehiclesData]);
+
+  const createVehicleModel = useCallback(async ({ make, name }) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await api.post("/api/vehicles/models/", { make, name });
+      await fetchVehiclesData();
+      return true;
+    } catch (err) {
+      setError(parseBackendError(err));
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchVehiclesData]);
+
   const deleteVehicle = useCallback(async (vehicleId) => {
     setIsLoading(true);
     setError(null);
@@ -123,6 +155,8 @@ export function useAdminVehicles() {
     error,
     clearError,
     createVehicle,
+    createVehicleMake,
+    createVehicleModel,
     updateVehicle,
     deleteVehicle,
     refreshVehicles: fetchVehiclesData,

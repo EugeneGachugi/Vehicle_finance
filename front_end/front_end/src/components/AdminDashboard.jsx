@@ -4,14 +4,19 @@ import {
   AlertCircle,
   Car,
   Check,
+  ChevronDown,
   CircleDollarSign,
+  Clock3,
   CreditCard,
+  ExternalLink,
+  FileCheck2,
   FileText,
   Link,
   Plus,
   RefreshCw,
   ShieldCheck,
   Trash2,
+  Upload,
   Users,
   X,
 } from "lucide-react";
@@ -28,6 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAdminDrivers } from "@/hooks/useAdminDrivers";
+import { useAdminDocuments } from "@/hooks/useAdminDocuments";
 import { useAdminPayments } from "@/hooks/useAdminPayments";
 import { useAdminVehicles } from "@/hooks/useAdminVehicles";
 
@@ -35,6 +41,7 @@ const NAV_ITEMS = [
   { key: "drivers", label: "Drivers", icon: Users },
   { key: "vehicles", label: "Vehicles", icon: Car },
   { key: "payments", label: "Payments", icon: CreditCard },
+  { key: "documents", label: "Documents", icon: FileCheck2 },
 ];
 
 const MODULE_META = {
@@ -49,6 +56,10 @@ const MODULE_META = {
   payments: {
     title: "Financial Oversight",
     desc: "Contracts, invoices, and payment tracking",
+  },
+  documents: {
+    title: "Document Operations",
+    desc: "Office uploads, verification, and expiry tracking",
   },
 };
 
@@ -70,7 +81,24 @@ const statusClassNames = {
   OVERPAID: "border-violet-200 bg-violet-50 text-violet-700",
   SUCCESS: "border-emerald-200 bg-emerald-50 text-emerald-700",
   FAILED: "border-rose-200 bg-rose-50 text-rose-700",
+  PN: "border-amber-200 bg-amber-50 text-amber-700",
+  VR: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  RJ: "border-rose-200 bg-rose-50 text-rose-700",
+  EX: "border-zinc-300 bg-zinc-100 text-zinc-700",
 };
+
+const DOCUMENT_TYPES = [
+  ["IF", "ID Front"],
+  ["IB", "ID Back"],
+  ["DL", "Driving License"],
+  ["KR", "KRA PIN"],
+  ["LB", "Logbook"],
+  ["IN", "Insurance"],
+  ["PB", "PSV Badge"],
+  ["IP", "Inspection Report"],
+];
+
+const EXPIRING_DOCUMENT_TYPES = new Set(["DL", "LB", "IN", "PB", "IP"]);
 
 const formatCurrency = (amount) => Number(amount || 0).toLocaleString("en-KE", {
   style: "currency",
@@ -92,23 +120,37 @@ function StatusBadge({ value, label }) {
 
 function StatCard({ label, value, meta, icon: Icon, tone = "emerald" }) {
   const toneClass = {
-    emerald: "border-t-emerald-600",
-    amber: "border-t-amber-600",
-    rose: "border-t-rose-600",
-    sky: "border-t-sky-600",
+    emerald: {
+      surface: "border-emerald-100 bg-emerald-50/70 hover:border-emerald-200",
+      icon: "bg-emerald-100 text-emerald-800",
+    },
+    amber: {
+      surface: "border-amber-100 bg-amber-50/70 hover:border-amber-200",
+      icon: "bg-amber-100 text-amber-800",
+    },
+    rose: {
+      surface: "border-rose-100 bg-rose-50/70 hover:border-rose-200",
+      icon: "bg-rose-100 text-rose-800",
+    },
+    sky: {
+      surface: "border-sky-100 bg-sky-50/70 hover:border-sky-200",
+      icon: "bg-sky-100 text-sky-800",
+    },
   }[tone];
 
   return (
-    <Card data-size="sm" className={`border-t-2 ${toneClass}`}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-sm">
-          {Icon && <Icon className="size-4 text-emerald-700" />}
-          {label}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-2xl font-semibold">{value}</p>
-        {meta && <p className="mt-1 text-xs text-zinc-500">{meta}</p>}
+    <Card data-size="sm" className={`rounded-lg border shadow-sm ring-0 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${toneClass.surface}`}>
+      <CardContent className="flex items-center justify-between gap-4 py-1">
+        <div>
+          <p className="text-xs font-semibold uppercase text-zinc-600">{label}</p>
+          <p className="mt-1 text-2xl font-semibold text-zinc-950">{value}</p>
+          {meta && <p className="mt-1 text-xs text-zinc-500">{meta}</p>}
+        </div>
+        {Icon && (
+          <div className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${toneClass.icon}`}>
+            <Icon className="size-5" />
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -123,16 +165,21 @@ function Field({ label, children }) {
   );
 }
 
-function Select({ value, onChange, children, required = false }) {
+function Select({ value, onChange, children, required = false, disabled = false }) {
   return (
-    <select
-      required={required}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      className="h-9 w-full rounded-md border border-input bg-white px-2.5 py-1 text-sm outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/20"
-    >
-      {children}
-    </select>
+    <div className="relative">
+      <select
+        required={required}
+        disabled={disabled}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        style={{ colorScheme: "light" }}
+        className="h-9 w-full appearance-none rounded-md border border-zinc-200 bg-white px-2.5 py-1 pr-9 text-sm text-zinc-950 shadow-xs outline-none transition focus:border-emerald-700 focus:ring-2 focus:ring-emerald-700/20 disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-500 [&>option]:bg-white [&>option]:text-zinc-950"
+      >
+        {children}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-zinc-500" />
+    </div>
   );
 }
 
@@ -186,12 +233,14 @@ function SearchAndFilter({ search, onSearch, filter, onFilter, filters, placehol
 }
 
 function DriversModule({ driversHook }) {
-  const { drivers, accessRequests, createDriver, approveDriver, rejectDriver, isLoading } = driversHook;
+  const { allDrivers, drivers, accessRequests, createDriver, approveDriver, rejectDriver, isLoading } = driversHook;
   const [view, setView] = useState("list");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [form, setForm] = useState({
-    full_name: "",
+    username: "",
+    first_name: "",
+    last_name: "",
     email: "",
     password: "",
     national_id: "",
@@ -199,10 +248,9 @@ function DriversModule({ driversHook }) {
     dl_number: "",
   });
 
-  const allDrivers = [...drivers, ...accessRequests];
   const filteredDrivers = allDrivers.filter((driver) => {
     const status = driver.driver_profile?.verification_status;
-    const matchesSearch = `${driver.full_name} ${driver.email} ${driver.national_id}`.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = `${driver.full_name} ${driver.username} ${driver.email} ${driver.national_id}`.toLowerCase().includes(search.toLowerCase());
     const matchesFilter = filter === "all" || status === filter;
     return matchesSearch && matchesFilter;
   });
@@ -210,7 +258,7 @@ function DriversModule({ driversHook }) {
   async function handleCreate(event) {
     event.preventDefault();
     await createDriver(form);
-    setForm({ full_name: "", email: "", password: "", national_id: "", kra_pin: "", dl_number: "" });
+    setForm({ username: "", first_name: "", last_name: "", email: "", password: "", national_id: "", kra_pin: "", dl_number: "" });
     setView("list");
   }
 
@@ -219,7 +267,7 @@ function DriversModule({ driversHook }) {
       {view === "create" && (
         <Modal
           title="Onboard New Driver"
-          subtitle="Create the user account and driver profile expected by the Django backend."
+          subtitle="Create the driver's login and office profile."
           onClose={() => setView("list")}
           footer={(
             <>
@@ -229,17 +277,25 @@ function DriversModule({ driversHook }) {
           )}
         >
           <form id="driver-form" className="grid gap-4" onSubmit={handleCreate}>
-            <Field label="Full Name">
-              <Input required value={form.full_name} onChange={(event) => setForm((current) => ({ ...current, full_name: event.target.value }))} />
-            </Field>
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Email">
-                <Input required type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} />
+              <Field label="First Name">
+                <Input required autoComplete="given-name" value={form.first_name} onChange={(event) => setForm((current) => ({ ...current, first_name: event.target.value }))} />
               </Field>
-              <Field label="Temporary Password">
-                <Input required type="password" value={form.password} onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} />
+              <Field label="Last Name">
+                <Input required autoComplete="family-name" value={form.last_name} onChange={(event) => setForm((current) => ({ ...current, last_name: event.target.value }))} />
               </Field>
             </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Username">
+                <Input required autoComplete="username" value={form.username} onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))} />
+              </Field>
+              <Field label="Email">
+                <Input required type="email" autoComplete="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} />
+              </Field>
+            </div>
+            <Field label="Temporary Password">
+              <Input required type="password" autoComplete="new-password" value={form.password} onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} />
+            </Field>
             <div className="grid gap-4 md:grid-cols-3">
               <Field label="National ID">
                 <Input required value={form.national_id} onChange={(event) => setForm((current) => ({ ...current, national_id: event.target.value }))} />
@@ -270,7 +326,7 @@ function DriversModule({ driversHook }) {
         <Button onClick={() => setView("create")}><Plus /> New Driver</Button>
       </div>
 
-      <Card>
+      <Card className="rounded-lg border-zinc-200 shadow-sm ring-0">
         <SearchAndFilter
           search={search}
           onSearch={setSearch}
@@ -302,15 +358,15 @@ function DriversModule({ driversHook }) {
               ) : filteredDrivers.map((driver) => {
                 const status = driver.driver_profile?.verification_status;
                 return (
-                  <TableRow key={driver.id}>
+                  <TableRow key={driver.id} className={status === "PENDING" ? "bg-amber-50/40" : ""}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="flex size-8 items-center justify-center rounded-full bg-emerald-50 text-xs font-semibold text-emerald-700">
+                        <div className="flex size-10 items-center justify-center rounded-lg bg-emerald-100 text-xs font-semibold text-emerald-800">
                           {initials(driver.full_name)}
                         </div>
                         <div>
                           <p className="font-medium">{driver.full_name}</p>
-                          <p className="text-xs text-zinc-500">{driver.email}</p>
+                          <p className="text-xs text-zinc-500">@{driver.username} · {driver.email}</p>
                         </div>
                       </div>
                     </TableCell>
@@ -322,8 +378,8 @@ function DriversModule({ driversHook }) {
                       <div className="flex justify-end gap-2">
                         {status === "PENDING" && (
                           <>
-                            <Button size="icon-sm" variant="outline" onClick={() => approveDriver(driver.id)} disabled={isLoading} aria-label={`Approve ${driver.full_name}`}><Check /></Button>
-                            <Button size="icon-sm" variant="destructive" onClick={() => rejectDriver(driver.id)} disabled={isLoading} aria-label={`Reject ${driver.full_name}`}><X /></Button>
+                            <Button title="Verify driver" size="icon-sm" variant="outline" onClick={() => approveDriver(driver.id)} disabled={isLoading} aria-label={`Approve ${driver.full_name}`}><Check /></Button>
+                            <Button title="Reject driver" size="icon-sm" variant="destructive" onClick={() => rejectDriver(driver.id)} disabled={isLoading} aria-label={`Reject ${driver.full_name}`}><X /></Button>
                           </>
                         )}
                       </div>
@@ -340,14 +396,30 @@ function DriversModule({ driversHook }) {
 }
 
 function VehiclesModule({ vehiclesHook, driversHook }) {
-  const { vehicles, vehicleModels, availableVehicles, financedVehicles, createVehicle, updateVehicle, deleteVehicle, isLoading } = vehiclesHook;
+  const {
+    vehicles,
+    vehicleMakes,
+    vehicleModels,
+    availableVehicles,
+    financedVehicles,
+    createVehicle,
+    createVehicleMake,
+    createVehicleModel,
+    updateVehicle,
+    deleteVehicle,
+    isLoading,
+  } = vehiclesHook;
   const { drivers } = driversHook;
   const [showCreate, setShowCreate] = useState(false);
+  const [showCreateMake, setShowCreateMake] = useState(false);
+  const [showCreateModel, setShowCreateModel] = useState(false);
   const [assignTarget, setAssignTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [selectedDriverId, setSelectedDriverId] = useState("");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [makeName, setMakeName] = useState("");
+  const [modelForm, setModelForm] = useState({ make: "", name: "" });
   const [form, setForm] = useState({
     plate_number: "",
     model: "",
@@ -371,6 +443,24 @@ function VehiclesModule({ vehiclesHook, driversHook }) {
     await createVehicle(form);
     setForm({ plate_number: "", model: "", yom: "", chasis_number: "", engine_number: "", color: "", valuation: "", status: "AV" });
     setShowCreate(false);
+  }
+
+  async function handleCreateMake(event) {
+    event.preventDefault();
+    const created = await createVehicleMake(makeName.trim());
+    if (!created) return;
+
+    setMakeName("");
+    setShowCreateMake(false);
+  }
+
+  async function handleCreateModel(event) {
+    event.preventDefault();
+    const created = await createVehicleModel(modelForm);
+    if (!created) return;
+
+    setModelForm({ make: "", name: "" });
+    setShowCreateModel(false);
   }
 
   async function handleAssign() {
@@ -408,15 +498,21 @@ function VehiclesModule({ vehiclesHook, driversHook }) {
                 </Select>
               </Field>
             </div>
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2">
               <Field label="Year">
-                <Input required type="number" value={form.yom} onChange={(event) => setForm((current) => ({ ...current, yom: event.target.value }))} />
+                <Input required min="1975" max={new Date().getFullYear()} type="number" value={form.yom} onChange={(event) => setForm((current) => ({ ...current, yom: event.target.value }))} />
+              </Field>
+              <Field label="Initial Status">
+                <Select value={form.status} onChange={(value) => setForm((current) => ({ ...current, status: value }))}>
+                  <option value="AV">Available</option>
+                  <option value="OS">Out of Service</option>
+                </Select>
               </Field>
               <Field label="Color">
                 <Input required value={form.color} onChange={(event) => setForm((current) => ({ ...current, color: event.target.value }))} />
               </Field>
               <Field label="Valuation">
-                <Input required type="number" value={form.valuation} onChange={(event) => setForm((current) => ({ ...current, valuation: event.target.value }))} />
+                <Input required min="0" step="0.01" type="number" value={form.valuation} onChange={(event) => setForm((current) => ({ ...current, valuation: event.target.value }))} />
               </Field>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
@@ -427,6 +523,52 @@ function VehiclesModule({ vehiclesHook, driversHook }) {
                 <Input required value={form.engine_number} onChange={(event) => setForm((current) => ({ ...current, engine_number: event.target.value }))} />
               </Field>
             </div>
+          </form>
+        </Modal>
+      )}
+
+      {showCreateMake && (
+        <Modal
+          title="Add Vehicle Make"
+          subtitle="Add a manufacturer to the vehicle catalog."
+          onClose={() => setShowCreateMake(false)}
+          footer={(
+            <>
+              <Button variant="outline" onClick={() => setShowCreateMake(false)}>Cancel</Button>
+              <Button type="submit" form="make-form" disabled={isLoading}><Plus /> Add Make</Button>
+            </>
+          )}
+        >
+          <form id="make-form" onSubmit={handleCreateMake}>
+            <Field label="Make">
+              <Input required placeholder="Toyota" value={makeName} onChange={(event) => setMakeName(event.target.value)} />
+            </Field>
+          </form>
+        </Modal>
+      )}
+
+      {showCreateModel && (
+        <Modal
+          title="Add Vehicle Model"
+          subtitle="Attach a model to an existing manufacturer."
+          onClose={() => setShowCreateModel(false)}
+          footer={(
+            <>
+              <Button variant="outline" onClick={() => setShowCreateModel(false)}>Cancel</Button>
+              <Button type="submit" form="model-form" disabled={isLoading}><Plus /> Add Model</Button>
+            </>
+          )}
+        >
+          <form id="model-form" className="grid gap-4" onSubmit={handleCreateModel}>
+            <Field label="Make">
+              <Select required value={modelForm.make} onChange={(value) => setModelForm((current) => ({ ...current, make: value }))}>
+                <option value="">Choose make</option>
+                {vehicleMakes.map((make) => <option key={make.id} value={make.id}>{make.make}</option>)}
+              </Select>
+            </Field>
+            <Field label="Model">
+              <Input required placeholder="Probox" value={modelForm.name} onChange={(event) => setModelForm((current) => ({ ...current, name: event.target.value }))} />
+            </Field>
           </form>
         </Modal>
       )}
@@ -484,7 +626,11 @@ function VehiclesModule({ vehiclesHook, driversHook }) {
           <h2 className="text-lg font-semibold">Fleet Ledger</h2>
           <p className="text-sm text-zinc-500">Add vehicles, assign drivers, and manage fleet status.</p>
         </div>
-        <Button onClick={() => setShowCreate(true)}><Plus /> Add Vehicle</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setShowCreateMake(true)}><Plus /> Add Make</Button>
+          <Button variant="outline" onClick={() => setShowCreateModel(true)} disabled={vehicleMakes.length === 0}><Plus /> Add Model</Button>
+          <Button onClick={() => setShowCreate(true)} disabled={vehicleModels.length === 0}><Car /> Register Vehicle</Button>
+        </div>
       </div>
 
       <Card>
@@ -506,7 +652,7 @@ function VehiclesModule({ vehiclesHook, driversHook }) {
           {filteredVehicles.length === 0 ? (
             <div className="col-span-full py-10 text-center text-sm text-zinc-500">No vehicles found.</div>
           ) : filteredVehicles.map((vehicle) => (
-            <div key={vehicle.id} className="rounded-lg border border-zinc-200 bg-white p-4">
+            <div key={vehicle.id} className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-semibold">{vehicle.plate_number}</p>
@@ -551,7 +697,7 @@ function PaymentsModule({ paymentsHook, driversHook, vehiclesHook }) {
     billing_day: "MON",
   });
   const [invoiceForm, setInvoiceForm] = useState({ contract: "", amount_due: "", due_date: "" });
-  const [paymentForm, setPaymentForm] = useState({ invoice: "", amount: "", transaction_reference: "" });
+  const [paymentForm, setPaymentForm] = useState({ invoice: "", amount: "", mpesa_receipt: "" });
 
   const activeContracts = contracts.filter((contract) => contract.status === "AC");
   const selectedVehicle = vehicles.find((vehicle) => vehicle.id === contractForm.vehicle);
@@ -635,6 +781,12 @@ function PaymentsModule({ paymentsHook, driversHook, vehiclesHook }) {
                 </Select>
               </Field>
             </div>
+            <Field label="Contract Status">
+              <Select value={contractForm.status} onChange={(value) => setContractForm((current) => ({ ...current, status: value }))}>
+                <option value="DR">Draft</option>
+                <option value="AC">Active</option>
+              </Select>
+            </Field>
           </form>
         </Modal>
       )}
@@ -675,7 +827,7 @@ function PaymentsModule({ paymentsHook, driversHook, vehiclesHook }) {
       {showPaymentModal && (
         <Modal
           title="Log Payment"
-          subtitle="Record an admin-side payment against an invoice. Paystack will come later on the driver side."
+          subtitle="Record an office-confirmed payment against an invoice."
           onClose={() => setShowPaymentModal(false)}
           footer={(
             <>
@@ -697,8 +849,8 @@ function PaymentsModule({ paymentsHook, driversHook, vehiclesHook }) {
               <Field label="Amount">
                 <Input required type="number" value={paymentForm.amount} onChange={(event) => setPaymentForm((current) => ({ ...current, amount: event.target.value }))} />
               </Field>
-              <Field label="Transaction Reference">
-                <Input required value={paymentForm.transaction_reference} onChange={(event) => setPaymentForm((current) => ({ ...current, transaction_reference: event.target.value }))} />
+              <Field label="M-Pesa Receipt">
+                <Input required value={paymentForm.mpesa_receipt} onChange={(event) => setPaymentForm((current) => ({ ...current, mpesa_receipt: event.target.value }))} />
               </Field>
             </div>
           </form>
@@ -864,6 +1016,173 @@ function PaymentsModule({ paymentsHook, driversHook, vehiclesHook }) {
   );
 }
 
+function DocumentsModule({ documentsHook, driversHook, vehiclesHook }) {
+  const { documents, uploadDocument, reviewDocument, isLoading, notice, clearNotice } = documentsHook;
+  const { allDrivers } = driversHook;
+  const { vehicles } = vehiclesHook;
+  const [form, setForm] = useState({
+    targetType: "driver",
+    targetId: "",
+    docType: "IF",
+    expiryDate: "",
+    file: null,
+  });
+  const [fileInputKey, setFileInputKey] = useState(0);
+
+  const needsExpiry = EXPIRING_DOCUMENT_TYPES.has(form.docType);
+  const targetOptions = form.targetType === "driver" ? allDrivers : vehicles;
+  const pendingCount = documents.filter((document) => document.status === "PN").length;
+  const expiringSoonCount = documents.filter((document) => {
+    if (!document.expiry_date || document.status !== "VR") return false;
+    const days = Math.ceil((new Date(document.expiry_date) - new Date()) / 86400000);
+    return days >= 0 && days <= 7;
+  }).length;
+
+  async function handleUpload(event) {
+    event.preventDefault();
+    const uploaded = await uploadDocument({
+      ...form,
+      targetId: form.targetId,
+      docType: form.docType,
+      expiryDate: form.expiryDate,
+    });
+    if (!uploaded) return;
+
+    setForm((current) => ({ ...current, expiryDate: "", file: null }));
+    setFileInputKey((current) => current + 1);
+  }
+
+  return (
+    <div className="grid gap-6">
+      {notice && (
+        <div className="flex items-start justify-between gap-3 rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+          <div className="flex items-center gap-2"><Check className="size-4" /><p>{notice}</p></div>
+          <Button type="button" variant="ghost" size="icon-sm" aria-label="Dismiss message" onClick={clearNotice}><X /></Button>
+        </div>
+      )}
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="All Documents" value={documents.length} meta="Uploaded records" icon={FileText} />
+        <StatCard label="Pending Review" value={pendingCount} meta="Awaiting admin action" icon={Clock3} tone="amber" />
+        <StatCard label="Verified" value={documents.filter((document) => document.status === "VR").length} meta="Approved documents" icon={ShieldCheck} tone="sky" />
+        <StatCard label="Expiring Soon" value={expiringSoonCount} meta="Within seven days" icon={AlertCircle} tone="rose" />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base"><Upload className="size-4" /> Upload Document</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form className="grid gap-4 lg:grid-cols-5 lg:items-end" onSubmit={handleUpload}>
+            <Field label="Target Type">
+              <Select
+                value={form.targetType}
+                onChange={(value) => setForm((current) => ({ ...current, targetType: value, targetId: "" }))}
+              >
+                <option value="driver">Driver</option>
+                <option value="vehicle">Vehicle</option>
+              </Select>
+            </Field>
+            <Field label={form.targetType === "driver" ? "Driver" : "Vehicle"}>
+              <Select
+                required
+                value={form.targetId}
+                onChange={(value) => setForm((current) => ({ ...current, targetId: value }))}
+              >
+                <option value="">Choose {form.targetType}</option>
+                {targetOptions.map((target) => (
+                  <option key={target.id} value={target.id}>
+                    {form.targetType === "driver" ? target.full_name : `${target.plate_number} - ${target.full_name}`}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Document Type">
+              <Select
+                required
+                value={form.docType}
+                onChange={(value) => setForm((current) => ({
+                  ...current,
+                  docType: value,
+                  expiryDate: EXPIRING_DOCUMENT_TYPES.has(value) ? current.expiryDate : "",
+                }))}
+              >
+                {DOCUMENT_TYPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </Select>
+            </Field>
+            {needsExpiry ? (
+              <Field label="Expiry Date">
+                <Input
+                  required
+                  type="date"
+                  value={form.expiryDate}
+                  onChange={(event) => setForm((current) => ({ ...current, expiryDate: event.target.value }))}
+                />
+              </Field>
+            ) : <div />}
+            <Field label="File">
+              <Input
+                key={fileInputKey}
+                required
+                type="file"
+                onChange={(event) => setForm((current) => ({ ...current, file: event.target.files?.[0] || null }))}
+              />
+            </Field>
+            <Button type="submit" disabled={isLoading || !form.file || !form.targetId}>
+              <Upload /> {isLoading ? "Uploading" : "Upload"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Document</TableHead>
+                <TableHead>Target</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Expiry</TableHead>
+                <TableHead>File</TableHead>
+                <TableHead className="text-right">Review</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {documents.length === 0 ? <EmptyRow colSpan={6}>No documents uploaded yet.</EmptyRow> : documents.map((document) => (
+                <TableRow key={document.id}>
+                  <TableCell className="font-medium">{document.doc_type_display}</TableCell>
+                  <TableCell>
+                    <p>{document.target_name}</p>
+                    <p className="text-xs capitalize text-zinc-500">{document.target_type}</p>
+                  </TableCell>
+                  <TableCell><StatusBadge value={document.status} label={document.status_display} /></TableCell>
+                  <TableCell>{document.expiry_date || "Not required"}</TableCell>
+                  <TableCell>
+                    <Button asChild size="sm" variant="outline">
+                      <a href={document.file} target="_blank" rel="noreferrer"><ExternalLink /> Open</a>
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex justify-end gap-2">
+                      {document.status !== "VR" && (
+                        <Button size="icon-sm" variant="outline" disabled={isLoading} aria-label={`Verify ${document.doc_type_display}`} onClick={() => reviewDocument(document.id, "VR")}><Check /></Button>
+                      )}
+                      {document.status !== "RJ" && (
+                        <Button size="icon-sm" variant="destructive" disabled={isLoading} aria-label={`Reject ${document.doc_type_display}`} onClick={() => reviewDocument(document.id, "RJ")}><X /></Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function Sidebar({ activeModule, setActiveModule, requestCount }) {
   return (
     <aside className="border-b border-emerald-800 bg-emerald-700 px-4 py-4 text-white lg:sticky lg:top-0 lg:h-screen lg:w-64 lg:border-b-0 lg:border-r lg:px-5 lg:py-6">
@@ -904,21 +1223,24 @@ export default function AdminDashboard() {
   const driversHook = useAdminDrivers();
   const vehiclesHook = useAdminVehicles();
   const paymentsHook = useAdminPayments();
+  const documentsHook = useAdminDocuments();
   const meta = MODULE_META[activeModule];
 
-  const combinedError = driversHook.error || vehiclesHook.error || paymentsHook.error;
-  const isLoading = driversHook.isLoading || vehiclesHook.isLoading || paymentsHook.isLoading;
+  const combinedError = driversHook.error || vehiclesHook.error || paymentsHook.error || documentsHook.error;
+  const isLoading = driversHook.isLoading || vehiclesHook.isLoading || paymentsHook.isLoading || documentsHook.isLoading;
 
   const module = useMemo(() => {
     if (activeModule === "drivers") return <DriversModule driversHook={driversHook} />;
     if (activeModule === "vehicles") return <VehiclesModule vehiclesHook={vehiclesHook} driversHook={driversHook} />;
-    return <PaymentsModule paymentsHook={paymentsHook} driversHook={driversHook} vehiclesHook={vehiclesHook} />;
-  }, [activeModule, driversHook, vehiclesHook, paymentsHook]);
+    if (activeModule === "payments") return <PaymentsModule paymentsHook={paymentsHook} driversHook={driversHook} vehiclesHook={vehiclesHook} />;
+    return <DocumentsModule documentsHook={documentsHook} driversHook={driversHook} vehiclesHook={vehiclesHook} />;
+  }, [activeModule, documentsHook, driversHook, vehiclesHook, paymentsHook]);
 
   function refreshAll() {
     driversHook.refreshDrivers();
     vehiclesHook.refreshVehicles();
     paymentsHook.refreshPayments();
+    documentsHook.refreshDocuments();
   }
 
   return (

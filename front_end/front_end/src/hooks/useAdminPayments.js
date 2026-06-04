@@ -144,7 +144,7 @@ export function useAdminPayments() {
       await api.post("/api/payments/payments/", {
         invoice: paymentFormData.invoice,
         amount: paymentFormData.amount,
-        mpesa_receipt: paymentFormData.mpesa_receipt || paymentFormData.transaction_reference,
+        mpesa_receipt: paymentFormData.mpesa_receipt,
       });
       await fetchPaymentsData();
     } catch (err) {
