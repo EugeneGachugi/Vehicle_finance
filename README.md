@@ -107,3 +107,16 @@ To test the workflow:
 - Do not commit real `.env` files. Use `.env.example` for safe placeholder values.
 - Do not commit local databases, virtual environments, `node_modules`, or build output.
 - The current Git remote is `origin`, pointing at the GitHub repository for this app.
+## screenshots
+### Admin Dashboard
+<img width="1554" height="641" alt="Adminpage" src="https://github.com/user-attachments/assets/89de00a1-4b55-4559-ad6a-8bd655f0b987" />
+### Driver Management
+<img width="1826" height="812" alt="Driver weekly installment" src="https://github.com/user-attachments/assets/7e5b0f8e-8c25-489c-88f7-f9dad426e8f4" />
+### Vehicle Management
+<img width="1540" height="695" alt="VEhicle screen" src="https://github.com/user-attachments/assets/d869c71c-390e-4269-8c63-3e4eaa1b9892" />
+### Contract Management
+<img width="1550" height="450" alt="Contract" src="https://github.com/user-attachments/assets/6aae5247-ff5e-43a7-885b-8c6fac59ded1" />
+
+
+
+
